@@ -1,0 +1,22 @@
+Package: vork-relay
+Version: [[version]]
+Section: net
+Priority: optional
+Architecture: all
+Depends: java21-runtime-headless | java22-runtime-headless | java23-runtime-headless | java24-runtime-headless | java25-runtime-headless
+Installed-Size: [[installed-size]]
+Maintainer: Vork <relay@vork.sh>
+Homepage: https://github.com/vork/vork-relay
+Description: Zero-knowledge encrypted authorization form relay
+ Vork Relay is a stateless HTTPS relay that allows Vork AI agents running
+ inside firewalled or air-gapped environments to request human authorization
+ without requiring any inbound firewall holes.
+ .
+ The relay is cryptographically blind: it stores only AES-256-GCM ciphertext.
+ The decryption key is delivered to the user's browser via the URL hash
+ fragment, which is never transmitted to the server.
+ .
+ On first start, the server opens on port 80 and presents a setup wizard
+ that obtains a TLS certificate from Let's Encrypt.  After the certificate
+ is issued the server restarts on port 443 and automatically renews the
+ certificate 30 days before expiry with no downtime.

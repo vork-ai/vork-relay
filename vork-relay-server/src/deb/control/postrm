@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    purge)
+        # Remove the service account and all data only on full purge.
+        # This preserves the TLS certificate directory on 'remove' so
+        # a reinstall can reuse the existing certificate.
+        if id -u vork-relay > /dev/null 2>&1; then
+            deluser --system --quiet vork-relay || true
+        fi
+        if getent group vork-relay > /dev/null 2>&1; then
+            delgroup --system --quiet vork-relay 2>/dev/null || true
+        fi
+
+        rm -rf /etc/vork/relay
+        rm -rf /var/log/vork-relay
+
+        systemctl daemon-reload
+        ;;
+
+    remove)
+        systemctl daemon-reload
+        ;;
+
+    upgrade|disappear|abort-upgrade|abort-install)
+        ;;
+
+    *)
+        echo "postrm called with unknown argument '$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

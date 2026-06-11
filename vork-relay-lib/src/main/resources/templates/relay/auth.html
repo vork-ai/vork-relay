@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+        Security note: the Content-Security-Policy header is set server-side
+        via SecurityConfig.  This meta tag serves as a fallback only.
+    -->
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-ancestors 'none';">
+    <title>Secure Authorization — Vork Relay</title>
+    <link rel="icon" type="image/png" th:href="@{/images/Vork-Faviconx128.png}">
+    <link rel="stylesheet" th:href="@{/relay/relay.css}">
+</head>
+<body>
+
+<!--
+    relay-app: the data-session-id attribute is the only server-supplied
+    value.  The AES-256-GCM key travels ONLY in the URL hash fragment
+    (window.location.hash) and is never sent to the server.
+-->
+<div id="relay-app"
+     th:data-session-id="${sessionId}"
+     aria-hidden="true">
+</div>
+
+<main class="relay-container" role="main">
+
+    <!-- ── Header ── -->
+    <header class="relay-header">
+        <div class="relay-logo">
+            <img class="relay-logo-icon" th:src="@{/images/Vork-Faviconx128.png}" alt="Vork" aria-hidden="true">
+            <span class="relay-logo-text">Vork Relay</span>
+        </div>
+        <div class="relay-badge" title="The server never sees the decryption key or plaintext">
+            ZERO-KNOWLEDGE
+        </div>
+    </header>
+
+    <!-- ── Crypto log panel (showboat) ── -->
+    <section class="crypto-log-panel" aria-label="Cryptographic operation log" aria-live="polite">
+        <div class="crypto-log-header" aria-hidden="true">
+            <span class="dot green"></span>
+            <span class="dot yellow"></span>
+            <span class="dot red"></span>
+            <span class="crypto-log-title">secure.crypto.js — browser context</span>
+        </div>
+        <div class="crypto-log-body" id="log-body" role="log" aria-label="Decryption progress">
+            <div class="log-entry visible pending" id="initial-entry">
+                <span class="log-icon" aria-hidden="true">⟴</span>
+                <span class="log-msg">initializing vork-relay client…</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Authorization form (rendered by JS after decryption) ── -->
+    <section class="form-container vork-hidden" id="form-container"
+             aria-label="Authorization form">
+        <h1 class="form-title" id="form-title"></h1>
+        <p  class="form-description" id="form-description"></p>
+        <form id="auth-form" novalidate>
+            <div id="form-fields"></div>
+            <div class="form-actions" id="form-actions" role="group" aria-label="Actions"></div>
+        </form>
+    </section>
+
+    <!-- ── Error display ── -->
+    <section class="error-container vork-hidden" id="error-container"
+             role="alert" aria-live="assertive">
+    </section>
+
+    <!-- ── Success display ── -->
+    <section class="success-container vork-hidden" id="success-container"
+             role="status" aria-live="polite">
+        <span class="success-icon" aria-hidden="true">&#x2713;</span>
+        <h2>Response Submitted</h2>
+        <p>Your encrypted response has been securely transmitted.
+           The server received only ciphertext. You may close this window.</p>
+    </section>
+
+</main>
+
+<!--
+    relay-auth.js is a static resource served from /static/js/.
+    There are no inline scripts on this page, satisfying CSP script-src 'self'.
+-->
+<script th:src="@{/relay/relay-auth.js}"></script>
+
+</body>
+</html>

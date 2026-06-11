@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    remove|upgrade|deconfigure)
+        # Stop the service before removal or upgrade.
+        # postinst for an upgrade will restart it once the new JAR is in place.
+        if systemctl is-active --quiet vork-relay.service 2>/dev/null; then
+            systemctl stop vork-relay.service || true
+        fi
+
+        if [ "$1" = "remove" ]; then
+            if systemctl is-enabled --quiet vork-relay.service 2>/dev/null; then
+                systemctl disable vork-relay.service || true
+            fi
+        fi
+        ;;
+
+    failed-upgrade)
+        ;;
+
+    *)
+        echo "prerm called with unknown argument '$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

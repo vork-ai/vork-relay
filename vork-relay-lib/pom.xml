@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>sh.vork</groupId>
+        <artifactId>vork-relay-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vork-relay-lib</artifactId>
+    <packaging>jar</packaging>
+    <name>vork-relay-lib</name>
+    <description>
+        Shared relay server library: in-memory store, REST API controller, and
+        auth form (Thymeleaf + JS) for the zero-knowledge AES-256-GCM relay
+        protocol. Usable in both the standalone vork-relay-server and embedded
+        directly inside vork-prototype.
+    </description>
+
+    <dependencies>
+
+        <!-- Web MVC — REST controllers + DeferredResult -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Thymeleaf — auth form template -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- Autoconfigure support — @AutoConfiguration, @ConditionalOn* -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
+        <!-- Annotation processing for @AutoConfiguration metadata -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <!-- No spring-boot-maven-plugin — this is a library, not a runnable app -->
+
+</project>

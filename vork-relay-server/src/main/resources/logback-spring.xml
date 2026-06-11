@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %5level [%15.15thread] %-40.40logger{39} : %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+        Relay API controller: INFO level only.
+        This ensures encrypted payload bytes are never accidentally printed
+        even at DEBUG level — the controller must never log field values.
+    -->
+    <logger name="sh.vork.relay.controller.RelayApiController" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <!-- Suppress Spring request/response body logging completely -->
+    <logger name="org.springframework.web.filter.CommonsRequestLoggingFilter" level="OFF"/>
+    <logger name="org.springframework.web.servlet.DispatcherServlet"          level="WARN"/>
+
+    <!-- Suppress Spring Security debug chatter in production -->
+    <logger name="org.springframework.security" level="WARN"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+</configuration>

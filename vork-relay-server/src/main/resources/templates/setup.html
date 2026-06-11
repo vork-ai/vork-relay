@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self';">
+    <title>TLS Setup — Vork Relay</title>
+    <link rel="icon" type="image/png" th:href="@{/images/Vork-Faviconx128.png}">
+    <link rel="stylesheet" th:href="@{/css/relay.css}">
+
+</head>
+<body>
+
+<main class="relay-container" role="main">
+
+    <!-- ── Header ── -->
+    <header class="relay-header">
+        <div class="relay-logo">
+            <img class="relay-logo-icon" th:src="@{/images/Vork-Faviconx128.png}" alt="Vork" aria-hidden="true">
+            <span class="relay-logo-text">Vork Relay</span>
+        </div>
+        <div class="relay-badge relay-badge-muted">
+            SETUP MODE
+        </div>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 1: Setup form                                                  -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <section id="form-section" class="setup-card">
+
+        <h1 class="setup-title">TLS Certificate Setup</h1>
+        <p class="setup-lead">
+            This is a one-time configuration step.  Vork Relay will request a
+            free TLS certificate from <strong>Let's Encrypt</strong> for your
+            domain using the
+            <a href="https://letsencrypt.org/docs/challenge-types/#http-01-challenge"
+               target="_blank" rel="noopener noreferrer">
+            HTTP-01 challenge</a>.  Once issued, the server restarts in HTTPS
+            mode.  Certificates renew automatically 30 days before expiry —
+            no further action is needed.
+        </p>
+
+        <p class="setup-section-title">Prerequisites</p>
+        <ul class="checklist">
+            <li>This server's domain name (e.g. <code>relay.example.com</code>)
+                has a DNS A record pointing to this machine's public IP.</li>
+            <li>Port 80 is open on this machine's firewall and reachable from the internet.</li>
+            <li class="warn">Nothing else is bound to port 80 on this host.</li>
+        </ul>
+
+        <form id="setup-form" novalidate>
+
+            <div class="field-group">
+                <label for="hostname">Hostname (FQDN)</label>
+                <input id="hostname" name="hostname" type="text" class="relay-input"
+                       placeholder="relay.example.com" autocomplete="off"
+                       autocapitalize="none" required>
+            </div>
+
+            <div class="field-group">
+                <label for="email">Contact Email</label>
+                <input id="email" name="email" type="email" class="relay-input"
+                       placeholder="admin@example.com" required>
+                <span class="staging-note">Used by Let's Encrypt for expiry notifications.</span>
+            </div>
+
+            <div class="field-group field-group-inline">
+                <input id="staging" name="staging" type="checkbox">
+                <label for="staging">
+                    Use Let's Encrypt <strong>staging</strong> server (for testing — issues untrusted certs)
+                </label>
+            </div>
+
+            <div class="tos-row">
+                <input id="agree_tos" name="agree_tos" type="checkbox" required>
+                <label for="agree_tos">
+                    I agree to the
+                    <a href="https://letsencrypt.org/repository/"
+                       target="_blank" rel="noopener noreferrer">
+                        Let's Encrypt Terms of Service
+                    </a>
+                </label>
+            </div>
+
+            <div class="error-banner vork-hidden" id="form-error" role="alert"></div>
+
+            <div class="form-actions">
+                <button type="submit" id="submit-btn" class="relay-btn relay-btn-primary">
+                    Obtain Certificate
+                </button>
+            </div>
+
+        </form>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 2: Progress (shown after form submit)                          -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <section id="progress-section" class="vork-hidden">
+
+        <div class="setup-card setup-card-top">
+            <p class="setup-section-title setup-section-title-flush">Requesting certificate for</p>
+            <p class="progress-hostname" id="progress-hostname"></p>
+        </div>
+
+        <!-- Reuse the crypto-log-panel aesthetic for ACME progress -->
+        <div class="crypto-log-panel crypto-log-panel-bottom">
+            <div class="crypto-log-header" aria-hidden="true">
+                <span class="dot green"></span>
+                <span class="dot yellow"></span>
+                <span class="dot red"></span>
+                <span class="crypto-log-title">acme4j — Let's Encrypt ACME v2</span>
+            </div>
+            <div class="crypto-log-body" id="progress-log" role="log" aria-live="polite"></div>
+        </div>
+
+        <!-- Done state -->
+        <div class="done-box vork-hidden" id="done-box">
+            <span class="success-icon" aria-hidden="true">&#x2713;</span>
+            <h2>Certificate Issued!</h2>
+            <p>
+                The relay server is restarting with HTTPS enabled.<br>
+                In a moment, navigate to:<br>
+                <a id="https-link" class="https-link" href="#"></a>
+            </p>
+            <p class="countdown" id="countdown"></p>
+        </div>
+
+        <!-- Error state — shown when the ACME flow fails -->
+        <div class="error-container vork-hidden" id="progress-error" role="alert">
+            <div class="error-box">
+                <span class="error-icon" aria-hidden="true">&#x26A0;</span>
+                <p id="progress-error-msg"></p>
+                <button id="retry-btn" class="relay-btn relay-btn-secondary">
+                    Try Again
+                </button>
+            </div>
+        </div>
+
+    </section>
+
+</main>
+
+<script th:src="@{/js/setup.js}"></script>
+</body>
+</html>

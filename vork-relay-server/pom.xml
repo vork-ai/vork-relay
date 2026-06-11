@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>sh.vork</groupId>
+        <artifactId>vork-relay-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vork-relay</artifactId>
+    <packaging>jar</packaging>
+    <name>vork-relay</name>
+    <description>Standalone zero-knowledge relay server for Vork DevOps tooling</description>
+
+    <dependencies>
+
+        <!-- Relay protocol: store, API controller, auth form -->
+        <dependency>
+            <groupId>sh.vork</groupId>
+            <artifactId>vork-relay-lib</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Security hardening (headers, CORS, CSRF config) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- Actuator — exposed surface is locked down in application.properties -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- ACME / Let's Encrypt client -->
+        <dependency>
+            <groupId>org.shredzone.acme4j</groupId>
+            <artifactId>acme4j-client</artifactId>
+        </dependency>
+
+        <!-- ── Test ──────────────────────────────────────────────────────── -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Playwright for E2E tests -->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <!-- Stable, versionless JAR name so the systemd unit never needs updating -->
+        <finalName>vork-relay</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!--
+                jdeb: produce a self-contained Debian package at mvn package.
+            -->
+            <plugin>
+                <groupId>org.vafer</groupId>
+                <artifactId>jdeb</artifactId>
+                <version>${jdeb.version}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>jdeb</goal></goals>
+                        <configuration>
+                            <deb>${project.build.directory}/vork-relay_${project.version}_all.deb</deb>
+                            <controlDir>${project.basedir}/src/deb/control</controlDir>
+                            <dataSet>
+
+                                <!-- Spring Boot über-JAR (all Java deps embedded) -->
+                                <data>
+                                    <src>${project.build.directory}/${project.build.finalName}.jar</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/vork-relay</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+
+                                <!-- systemd service unit -->
+                                <data>
+                                    <src>${project.basedir}/src/deb/service/vork-relay.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+
+                                <!--
+                                    Default application config.
+                                    Listed in conffiles (preserved on upgrade).
+                                    postinst tightens permissions to 640 root:vork-relay.
+                                -->
+                                <data>
+                                    <src>${project.basedir}/src/deb/config/application.properties</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/etc/vork/relay</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+
+                            </dataSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

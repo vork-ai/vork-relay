@@ -1,0 +1,70 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    configure)
+        # ── Create service account ────────────────────────────────────────────
+        # adduser --system creates a locked-password system user with no home
+        # directory shell.  The --group flag also creates a matching group.
+        if ! id -u vork-relay > /dev/null 2>&1; then
+            adduser \
+                --system \
+                --group \
+                --no-create-home \
+                --home /nonexistent \
+                --shell /usr/sbin/nologin \
+                --quiet \
+                vork-relay
+        fi
+
+        # ── Create and own runtime directories ──────────────────────────────
+        # /etc/vork/relay was created by dpkg unpacking the config file.
+        # Create sub-directories and the log directory here.
+        mkdir -p /etc/vork/relay/certs
+        mkdir -p /var/log/vork-relay
+
+        chown -R vork-relay:vork-relay /etc/vork/relay
+        chmod 750 /etc/vork/relay
+        chmod 750 /etc/vork/relay/certs
+
+        chown vork-relay:vork-relay /var/log/vork-relay
+        chmod 750 /var/log/vork-relay
+
+        # Config file must not be world-readable (may contain upload-token secret)
+        chmod 640 /etc/vork/relay/application.properties
+        chown root:vork-relay /etc/vork/relay/application.properties
+
+        # ── Systemd ───────────────────────────────────────────────────────────
+        systemctl daemon-reload
+
+        if [ -z "$2" ]; then
+            # Fresh install — enable and start (starts in setup mode on port 80)
+            systemctl enable vork-relay.service
+            systemctl start vork-relay.service || true
+            echo ""
+            echo "  ┌─────────────────────────────────────────────────────┐"
+            echo "  │  Vork Relay installed and started.                  │"
+            echo "  │                                                     │"
+            echo "  │  Open the setup wizard to obtain a TLS certificate: │"
+            echo "  │    http://$(hostname -f)/                            │"
+            echo "  │                                                     │"
+            echo "  │  Config: /etc/vork/relay/application.properties     │"
+            echo "  │  Logs:   journalctl -u vork-relay -f                │"
+            echo "  └─────────────────────────────────────────────────────┘"
+            echo ""
+        else
+            # Upgrade — restart to load new JAR
+            systemctl restart vork-relay.service || true
+        fi
+        ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+
+    *)
+        echo "postinst called with unknown argument '$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

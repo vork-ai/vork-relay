@@ -1,0 +1,68 @@
+[Unit]
+Description=Vork Relay — zero-knowledge encrypted authorization relay
+Documentation=https://github.com/vork/vork-relay
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=vork-relay
+Group=vork-relay
+
+# Spring Boot loads application.properties from the working directory,
+# so /etc/vork/relay/application.properties is picked up automatically.
+WorkingDirectory=/etc/vork/relay
+
+ExecStart=/usr/bin/java \
+    -Xmx256m \
+    -Djava.security.egd=file:/dev/./urandom \
+    -jar /usr/lib/vork-relay/vork-relay.jar
+
+# Restart on any non-zero exit code (covers OOM, assertion errors, etc.)
+# The JVM also calls System.exit(0) after TLS setup — that is a clean exit
+# and triggers a restart which is how the server moves from HTTP to HTTPS mode.
+Restart=always
+RestartSec=3s
+TimeoutStopSec=30s
+
+# ── Binding to privileged ports (80 / 443) ───────────────────────────────────
+# CAP_NET_BIND_SERVICE allows a non-root process to bind to ports < 1024.
+# AmbientCapabilities makes the capability available to the JVM process.
+# CapabilityBoundingSet limits the upper bound so no other caps can be gained.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+# ── systemd security hardening ───────────────────────────────────────────────
+# ProtectSystem=strict makes the entire filesystem read-only except for
+# the paths listed in ReadWritePaths.
+ProtectSystem=strict
+ProtectHome=true
+
+# The relay needs write access to:
+#   /etc/vork/relay   — certificate PEM files, application.properties
+#   /var/log/vork-relay — optional file logging (journald is the primary sink)
+ReadWritePaths=/etc/vork/relay /var/log/vork-relay
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false    # JVM JIT requires executable memory
+RestrictRealtime=true
+RemoveIPC=true
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+# Primary log sink is the systemd journal; view with:
+#   journalctl -u vork-relay -f
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vork-relay
+
+[Install]
+WantedBy=multi-user.target

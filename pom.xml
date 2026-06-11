@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>sh.vork</groupId>
+    <artifactId>vork-relay-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>vork-relay-parent</name>
+    <description>Parent POM for vork-relay multi-module project</description>
+
+    <modules>
+        <module>vork-relay-lib</module>
+        <module>vork-relay-server</module>
+    </modules>
+
+    <properties>
+        <java.version>21</java.version>
+        <playwright.version>1.46.0</playwright.version>
+        <acme4j.version>3.3.0</acme4j.version>
+        <jdeb.version>1.14</jdeb.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- ACME / Let's Encrypt client — version managed here for both modules -->
+            <dependency>
+                <groupId>org.shredzone.acme4j</groupId>
+                <artifactId>acme4j-client</artifactId>
+                <version>${acme4j.version}</version>
+            </dependency>
+            <!-- Playwright — test scope only in server module -->
+            <dependency>
+                <groupId>com.microsoft.playwright</groupId>
+                <artifactId>playwright</artifactId>
+                <version>${playwright.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
