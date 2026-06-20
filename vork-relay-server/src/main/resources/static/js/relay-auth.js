@@ -166,7 +166,7 @@ async function logStep(icon, message, cssClass, delayMs = 80) {
  * {
  *   title:       string,
  *   description: string,
- *   fields: [{ name, type, label, placeholder, required, options? }],
+ *   fields: [{ name, type, label, placeholder, value, required, options? }],
  *   actions: [{ name, label, variant }]
  * }
  */
@@ -177,7 +177,22 @@ function renderForm(schema) {
         schema.description || '';
 
     const fieldsDiv = document.getElementById('form-fields');
+    fieldsDiv.innerHTML = '';
     (schema.fields || []).forEach(field => {
+        const fieldType = String(field.type || 'text').toLowerCase();
+        const fieldPlaceholder = field.placeholder || '';
+        const fieldValue = (field.value == null) ? '' : String(field.value);
+
+        if (fieldType === 'hidden') {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.id = 'field-' + field.name;
+            hidden.name = field.name;
+            hidden.value = fieldValue || fieldPlaceholder;
+            fieldsDiv.appendChild(hidden);
+            return;
+        }
+
         const group = document.createElement('div');
         group.className = 'field-group';
 
@@ -187,20 +202,49 @@ function renderForm(schema) {
         group.appendChild(label);
 
         let input;
-        if (field.type === 'select' && Array.isArray(field.options)) {
+        if ((fieldType === 'select' || fieldType === 'dropdown') && Array.isArray(field.options)) {
             input = document.createElement('select');
+            if (!fieldValue) {
+                const blank = document.createElement('option');
+                blank.value = '';
+                blank.textContent = 'Select a value';
+                input.appendChild(blank);
+            }
             field.options.forEach(opt => {
                 const option       = document.createElement('option');
-                option.value       = typeof opt === 'object' ? opt.value : opt;
-                option.textContent = typeof opt === 'object' ? opt.label : opt;
+                option.value       = String(typeof opt === 'object' ? opt.value : opt);
+                option.textContent = String(typeof opt === 'object' ? opt.label : opt);
+                if (fieldValue && option.value === fieldValue) {
+                    option.selected = true;
+                }
                 input.appendChild(option);
             });
+        } else if (fieldType === 'textarea') {
+            input = document.createElement('textarea');
+            input.rows = 4;
+            input.placeholder = fieldPlaceholder;
+            input.value = fieldValue;
+        } else if (fieldType === 'checkbox') {
+            input = document.createElement('input');
+            input.type = 'checkbox';
+            input.checked = fieldValue.toLowerCase() === 'true';
+        } else if (fieldType === 'markdown') {
+            const markdown = document.createElement('div');
+            markdown.className = 'relay-markdown';
+            markdown.textContent = fieldValue || fieldPlaceholder;
+            group.appendChild(markdown);
+            fieldsDiv.appendChild(group);
+            return;
         } else {
             input             = document.createElement('input');
-            input.type        = field.type || 'text';
-            input.placeholder = field.placeholder || '';
-            if (field.required) input.required = true;
+            input.type        = fieldType === 'password' ? 'password' : 'text';
+            input.placeholder = fieldPlaceholder;
+            input.value       = fieldValue;
+            if (fieldType === 'readonly') {
+                input.readOnly = true;
+            }
         }
+        if (field.required) input.required = true;
         input.id        = 'field-' + field.name;
         input.name      = field.name;
         input.className = 'relay-input';
@@ -237,7 +281,11 @@ async function handleSubmit(action) {
     // Collect field values
     const fields = {};
     document.querySelectorAll('#form-fields [name]').forEach(el => {
-        fields[el.name] = el.value;
+        if (el.type === 'checkbox') {
+            fields[el.name] = el.checked ? 'true' : 'false';
+        } else {
+            fields[el.name] = el.value;
+        }
     });
 
     const sessionId = document.getElementById('relay-app').dataset.sessionId;
