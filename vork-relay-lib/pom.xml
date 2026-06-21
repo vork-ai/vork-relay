@@ -17,7 +17,7 @@
         Shared relay server library: in-memory store, REST API controller, and
         auth form (Thymeleaf + JS) for the zero-knowledge AES-256-GCM relay
         protocol. Usable in both the standalone vork-relay-server and embedded
-        directly inside vork-prototype.
+        directly inside vork-server.
     </description>
 
     <dependencies>

@@ -1,6 +1,6 @@
 # vork-relay
 
-A zero-knowledge encrypted authorization-form relay for [Vork](../vork-prototype) DevOps tooling.
+A zero-knowledge encrypted authorization-form relay for [Vork](../vork-server) DevOps tooling.
 
 Vork agents running inside air-gapped or firewalled environments need a way to pause a running automation and ask a human for approval or credentials — without requiring that environment to be reachable from the public internet.  `vork-relay` is the secure middleman that makes this possible.
 
