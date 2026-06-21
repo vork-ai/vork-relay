@@ -7,7 +7,7 @@
     <parent>
         <groupId>sh.vork</groupId>
         <artifactId>vork-relay-parent</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>vork-relay-lib</artifactId>
@@ -46,7 +46,7 @@
 
     <properties>
         <maven.deploy.skip>false</maven.deploy.skip>
-        <project.build.outputTimestamp>${maven.build.timestamp}</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-06-21T18:04:36Z</project.build.outputTimestamp>
     </properties>
 
     <dependencies>
