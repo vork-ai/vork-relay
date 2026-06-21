@@ -11,12 +11,12 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Security configuration with two operating modes:
  *
- * <h3>SETUP mode ({@code vork.relay.ssl-enabled=false})</h3>
+ * <h2>SETUP mode ({@code vork.relay.ssl-enabled=false})</h2>
  * The server runs on plain HTTP port 80 with no certificate.  Only the
  * setup wizard and ACME challenge endpoints are accessible; all relay API
  * and auth view endpoints are denied.
  *
- * <h3>SECURE mode ({@code vork.relay.ssl-enabled=true})</h3>
+ * <h2>SECURE mode ({@code vork.relay.ssl-enabled=true})</h2>
  * The main listener is HTTPS on port 443.  An auxiliary Tomcat connector
  * on port 80 handles two traffic patterns:
  * <ul>
@@ -26,11 +26,11 @@ import org.springframework.security.web.SecurityFilterChain;
  *       Security's {@code requiresChannel().requiresSecure()}.
  * </ul>
  *
- * <h3>CSRF</h3>
+ * <h2>CSRF</h2>
  * Disabled for API and setup endpoints (stateless; session UUID + encrypted
  * payload provide equivalent protection for the relay API).
  *
- * <h3>HSTS</h3>
+ * <h2>HSTS</h2>
  * Only emitted in secure mode; a browser receiving HSTS over plain HTTP would
  * incorrectly pin a non-TLS connection.
  */
@@ -51,6 +51,17 @@ public class SecurityConfig {
     @Value("${vork.relay.ssl-enabled:false}")
     private boolean sslEnabled;
 
+    /** Create security configuration. */
+    public SecurityConfig() {
+    }
+
+    /**
+     * Build the relay security filter chain.
+     *
+     * @param http mutable Spring Security HTTP configuration.
+     * @return configured stateless relay security filter chain.
+     * @throws Exception when Spring Security cannot build the chain.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 

@@ -43,6 +43,10 @@ public class CertificateEnvironmentPostProcessor implements EnvironmentPostProce
     private static final Pattern FIRST_CERT = Pattern.compile(
             "-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----", Pattern.DOTALL);
 
+    /** Create the certificate-based environment post-processor. */
+    public CertificateEnvironmentPostProcessor() {
+    }
+
     /**
      * Run after {@code ConfigDataEnvironmentPostProcessor} (order
      * {@code HIGHEST_PRECEDENCE + 10}) so that {@code vork.relay.cert-dir} has

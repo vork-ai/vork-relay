@@ -7,7 +7,7 @@
     <parent>
         <groupId>sh.vork</groupId>
         <artifactId>vork-relay-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>vork-relay-lib</artifactId>
@@ -19,6 +19,35 @@
         protocol. Usable in both the standalone vork-relay-server and embedded
         directly inside vork-server.
     </description>
+    <url>https://github.com/vork-ai/vork-relay</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>vork-ai</id>
+            <name>Vork AI</name>
+            <url>https://github.com/vork-ai</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/vork-ai/vork-relay</url>
+        <connection>scm:git:https://github.com/vork-ai/vork-relay.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/vork-ai/vork-relay.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+        <maven.deploy.skip>false</maven.deploy.skip>
+        <project.build.outputTimestamp>${maven.build.timestamp}</project.build.outputTimestamp>
+    </properties>
 
     <dependencies>
 
@@ -53,9 +82,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
-
-    <!-- No spring-boot-maven-plugin — this is a library, not a runnable app -->
 
 </project>

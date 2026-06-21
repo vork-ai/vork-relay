@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Tomcat connector configuration for HTTPS mode.
  *
- * <h3>Why a second connector?</h3>
+ * <h2>Why a second connector?</h2>
  * Spring Boot's main server port is configured to 443 by
  * {@link CertificateEnvironmentPostProcessor} when a certificate is present.
  * HTTPS on 443 handles the relay traffic.  However, two things still need
@@ -37,9 +37,15 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class WebServerConfig {
 
+    /** Create web server connector configuration. */
+    public WebServerConfig() {
+    }
+
     /**
      * Adds an auxiliary plain-HTTP connector on port 80 to the embedded Tomcat
      * instance that is otherwise configured for HTTPS on port 443.
+     *
+     * @return web server customizer that adds an additional HTTP connector.
      */
     @Bean
     @ConditionalOnProperty(name = "vork.relay.ssl-enabled", havingValue = "true")

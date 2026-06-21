@@ -31,10 +31,22 @@ public class AcmeChallengeController {
 
     private final AcmeChallengeStore challengeStore;
 
+    /**
+     * Create the challenge controller.
+     *
+     * @param challengeStore in-memory ACME token to key-authorization mapping store.
+     */
     public AcmeChallengeController(AcmeChallengeStore challengeStore) {
         this.challengeStore = challengeStore;
     }
 
+    /**
+     * Serve the ACME HTTP-01 key-authorization payload for a challenge token.
+     *
+     * @param token ACME challenge token from the request path.
+     * @return {@code 200} with key-authorization when present, otherwise
+     *         {@code 400} for invalid token syntax or {@code 404} when unknown.
+     */
     @GetMapping(value = "/.well-known/acme-challenge/{token}",
                 produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> challenge(@PathVariable String token) {

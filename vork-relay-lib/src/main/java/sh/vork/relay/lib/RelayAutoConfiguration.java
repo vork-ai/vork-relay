@@ -18,7 +18,7 @@ import sh.vork.relay.lib.service.RelayStore;
  * <p>Activated automatically via
  * {@code META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports}.
  *
- * <h3>Configuration properties</h3>
+ * <h2>Configuration properties</h2>
  * <ul>
  *   <li>{@code vork.relay.ttl-minutes} (default 15) — entry TTL
  *   <li>{@code vork.relay.max-entries} (default 1000) — store capacity cap

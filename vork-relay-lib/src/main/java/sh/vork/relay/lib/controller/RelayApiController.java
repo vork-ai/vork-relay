@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 /**
  * Blind relay REST API.
  *
- * <h3>Zero-knowledge contract</h3>
+ * <h2>Zero-knowledge contract</h2>
  * <ul>
  *   <li>No endpoint logs payload field values.
  *   <li>The GET fetch-once endpoint atomically deletes the entry on first read.
@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  *       hash fragment, which is not included in HTTP requests.
  * </ul>
  *
- * <h3>Endpoints</h3>
+ * <h2>Endpoints</h2>
  * <pre>
  *   POST /api/v1/relay/{sessionId}           — upload encrypted form (offline container)
  *   GET  /api/v1/relay/{sessionId}           — fetch + delete form (browser, fetch-once)

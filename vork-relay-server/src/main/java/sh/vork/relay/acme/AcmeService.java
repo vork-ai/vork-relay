@@ -39,22 +39,22 @@ import java.util.regex.Pattern;
 /**
  * ACME (Let's Encrypt) certificate lifecycle manager.
  *
- * <h3>Initial acquisition</h3>
+ * <h2>Initial acquisition</h2>
  * Called from {@link sh.vork.relay.controller.SetupController} after the user
  * submits the setup form.  Runs in a virtual thread so the HTTP response can
  * return immediately.  On success, writes {@code cert.pem} and
  * {@code privkey.pem} to the cert directory and calls {@code System.exit(0)}
  * — the process manager (systemd / Docker {@code restart: always}) restarts
- * with {@link CertificateEnvironmentPostProcessor} picking up the new files
+ * with {@link sh.vork.relay.config.CertificateEnvironmentPostProcessor} picking up the new files
  * and enabling HTTPS mode.
  *
- * <h3>Renewal</h3>
+ * <h2>Renewal</h2>
  * Runs daily at 03:00.  If fewer than {@value #RENEW_DAYS} days remain, the
  * ACME flow is re-executed and the PEM files are overwritten atomically.
  * Spring Boot's {@code spring.ssl.bundle.pem.vork-relay.reload-on-update=true}
  * detects the file change and reloads the SSL context without restarting.
  *
- * <h3>HTTP-01 challenge</h3>
+ * <h2>HTTP-01 challenge</h2>
  * Tokens are stored in {@link AcmeChallengeStore} and served by
  * {@link sh.vork.relay.controller.AcmeChallengeController} at
  * {@code /.well-known/acme-challenge/{token}}.  The HTTP connector on port 80
@@ -88,6 +88,12 @@ public class AcmeService {
     private final ObjectMapper                  objectMapper;
     private final AtomicReference<SetupStatus>  setupStatus = new AtomicReference<>(SetupStatus.idle());
 
+    /**
+     * Create the ACME certificate service.
+     *
+     * @param challengeStore in-memory HTTP-01 challenge token store.
+     * @param objectMapper mapper used for reading/writing metadata JSON.
+     */
     @Autowired
     public AcmeService(AcmeChallengeStore challengeStore, ObjectMapper objectMapper) {
         this.challengeStore = challengeStore;
@@ -96,20 +102,17 @@ public class AcmeService {
 
     // ── Setup status (polled by the browser's progress page) ─────────────────
 
+    /**
+     * Get current setup/acquisition status for polling clients.
+     *
+     * @return current setup status snapshot.
+     */
     public SetupStatus getSetupStatus() {
         return setupStatus.get();
     }
 
     // ── Initial certificate acquisition ──────────────────────────────────────
 
-    /**
-     * Launch the ACME flow in a background virtual thread.
-     * Progress is exposed via {@link #getSetupStatus()}.
-     * On success, the JVM exits so the process manager can restart it in
-     * HTTPS mode.
-     *
-     * @throws IllegalStateException if an acquisition is already in progress.
-     */
     /**
      * Reset the setup status back to IDLE so the user can retry after an error.
      * No-op if acquisition is currently running.
@@ -124,6 +127,14 @@ public class AcmeService {
         log.info("Setup status reset to IDLE (was {})", current.state());
     }
 
+    /**
+     * Launch the ACME acquisition flow in a background virtual thread.
+     *
+     * @param hostname DNS hostname to request a certificate for.
+     * @param email ACME account contact email.
+     * @param staging whether to use the Let's Encrypt staging endpoint.
+     * @throws IllegalStateException if acquisition is already running or done.
+     */
     public void startAcquisitionAsync(String hostname, String email, boolean staging) {
         SetupStatus current = setupStatus.get();
         log.debug("startAcquisitionAsync: current state={}", current.state());
@@ -166,6 +177,11 @@ public class AcmeService {
      * Execute a complete ACME HTTP-01 certificate issuance.
      * Writes {@code cert.pem}, {@code privkey.pem}, and {@code cert-metadata.json}
      * to {@code certDirPath} on success.
+        *
+        * @param hostname DNS hostname to include in the issued certificate.
+        * @param email ACME account contact email.
+        * @param staging whether to use the Let's Encrypt staging endpoint.
+        * @throws Exception on ACME, filesystem, or validation failures.
      */
     public void obtainCertificate(String hostname, String email, boolean staging) throws Exception {
         Path certDir = Paths.get(certDirPath);
@@ -426,8 +442,24 @@ public class AcmeService {
 
     // ── Setup status types ────────────────────────────────────────────────────
 
-    public enum SetupState { IDLE, RUNNING, DONE, ERROR }
+    /** Lifecycle states for first-run setup and ACME acquisition. */
+    public enum SetupState {
+        /** Setup has not started yet. */
+        IDLE,
+        /** Certificate acquisition is currently running. */
+        RUNNING,
+        /** Certificate acquisition completed successfully. */
+        DONE,
+        /** Certificate acquisition failed. */
+        ERROR
+    }
 
+    /**
+     * Public setup status payload returned by the polling endpoint.
+     *
+     * @param state high-level setup lifecycle state.
+     * @param message user-facing progress or error message.
+     */
     public record SetupStatus(SetupState state, String message) {
         static SetupStatus idle()              { return new SetupStatus(SetupState.IDLE,    "Not started"); }
         static SetupStatus running(String msg) { return new SetupStatus(SetupState.RUNNING, msg); }

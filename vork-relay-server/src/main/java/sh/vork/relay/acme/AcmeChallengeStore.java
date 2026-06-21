@@ -20,7 +20,16 @@ public class AcmeChallengeStore {
 
     private final ConcurrentHashMap<String, String> challenges = new ConcurrentHashMap<>();
 
-    /** Register the key-authorization response for a given ACME challenge token. */
+    /** Create an empty in-memory challenge store. */
+    public AcmeChallengeStore() {
+    }
+
+    /**
+     * Register the key-authorization response for a given ACME challenge token.
+     *
+     * @param token ACME challenge token.
+     * @param keyAuthorization key-authorization payload for the token.
+     */
     public void put(String token, String keyAuthorization) {
         challenges.put(token, keyAuthorization);
     }
@@ -28,13 +37,18 @@ public class AcmeChallengeStore {
     /**
      * Look up the key-authorization for a token.
      *
+     * @param token ACME challenge token.
      * @return the key-authorization string, or {@code null} if not present.
      */
     public String get(String token) {
         return challenges.get(token);
     }
 
-    /** Remove a token after its challenge is complete. */
+    /**
+     * Remove a token after its challenge is complete.
+     *
+     * @param token ACME challenge token to remove.
+     */
     public void remove(String token) {
         challenges.remove(token);
     }

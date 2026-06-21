@@ -15,6 +15,15 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class VorkRelayApplication {
 
+    /** Create relay application bootstrap type. */
+    public VorkRelayApplication() {
+    }
+
+    /**
+     * Start the Vork Relay Spring Boot application.
+     *
+     * @param args standard Spring Boot command-line arguments.
+     */
     public static void main(String[] args) {
         SpringApplication.run(VorkRelayApplication.class, args);
     }

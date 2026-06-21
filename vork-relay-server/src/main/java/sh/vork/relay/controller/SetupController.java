@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  * First-run setup wizard.  Active only when {@code vork.relay.ssl-enabled=false}
  * (i.e. no TLS certificate has been issued yet).
  *
- * <h3>Flow</h3>
+ * <h2>Flow</h2>
  * <ol>
  *   <li>{@code GET /} or {@code GET /setup} → render the setup form.
  *   <li>{@code POST /setup/initiate} → validate input, start the ACME flow
@@ -55,17 +55,30 @@ public class SetupController {
 
     private final AcmeService acmeService;
 
+    /**
+     * Create the setup controller.
+     *
+     * @param acmeService ACME orchestration service for setup and polling status.
+     */
     public SetupController(AcmeService acmeService) {
         this.acmeService = acmeService;
     }
 
-    /** Redirect root to setup page in setup mode. */
+    /**
+     * Redirect root to setup page in setup mode.
+     *
+     * @return redirect view name to {@code /setup}.
+     */
     @GetMapping("/")
     public String root() {
         return "redirect:/setup";
     }
 
-    /** Render the setup form, or redirect to progress if already running. */
+    /**
+     * Render the setup form, or redirect to progress if already running.
+     *
+     * @return template view name or a redirect view name.
+     */
     @GetMapping("/setup")
     public String setupPage() {
         SetupStatus status = acmeService.getSetupStatus();
@@ -75,7 +88,11 @@ public class SetupController {
         return "setup";
     }
 
-    /** Render the progress page. */
+    /**
+     * Render the progress page.
+     *
+     * @return setup template view name.
+     */
     @GetMapping("/setup/progress")
     public String progressPage() {
         return "setup";   // same template handles both views via JS
@@ -86,6 +103,12 @@ public class SetupController {
      *
      * <p>Validates hostname and email before delegating.  Returns JSON so the
      * setup form can submit via {@code fetch()} and immediately show progress.
+    *
+    * @param hostname requested DNS hostname for the certificate.
+    * @param email ACME account contact email.
+    * @param staging whether to use Let's Encrypt staging endpoint.
+    * @param agreeTos whether the user accepted Let's Encrypt terms.
+    * @return JSON response indicating success or validation/conflict failure.
      */
     @PostMapping("/setup/initiate")
     @ResponseBody
@@ -124,6 +147,8 @@ public class SetupController {
     /**
      * JSON polling endpoint for setup progress.
      * The browser calls this every 3 seconds during the ACME flow.
+        *
+        * @return current setup state and message.
      */
     @GetMapping("/setup/status")
     @ResponseBody
@@ -134,6 +159,8 @@ public class SetupController {
     /**
      * Reset the setup state back to IDLE so the user can retry after an error.
      * No-op if acquisition is currently running.
+        *
+        * @return JSON acknowledgement containing {@code ok=true}.
      */
     @PostMapping("/setup/reset")
     @ResponseBody

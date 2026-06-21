@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Ephemeral in-memory relay store.
  *
- * <h3>Zero-knowledge guarantees</h3>
+ * <h2>Zero-knowledge guarantees</h2>
  * <ul>
  *   <li>Ciphertext blobs are stored as opaque byte sequences; the service
  *       never decrypts or inspects field values.

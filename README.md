@@ -353,9 +353,68 @@ mvn spring-boot:run
 # Listening on http://localhost:8090
 ```
 
+Local development defaults to HTTP on port `8090` when no certificate directory is present.
+
+### TLS Certificate Modes (Startup Behavior)
+
+At startup, `vork-relay` checks `vork.relay.cert-dir` (default `/etc/vork/relay/certs`) for:
+
+- `cert.pem` (certificate chain)
+- `privkey.pem` (private key)
+
+The server mode is selected automatically:
+
+| Mode | Condition | Listener behavior |
+|---|---|---|
+| Local dev mode | Certificate directory does not exist | HTTP on configured `server.port` (default `8090`) |
+| Setup mode | Certificate directory exists, but no usable cert/key | HTTP on `:80`, setup wizard at `/setup` acquires Let's Encrypt cert |
+| Secure mode | Valid cert/key found (at least 7 days before expiry) | HTTPS on `:443` + HTTP `:80` for ACME challenge and redirect |
+
+### Certificate Sources Supported
+
+1. **Automatic Let's Encrypt (built in)**
+- First boot in setup mode serves a one-time setup flow at `/setup`.
+- Relay obtains a certificate via ACME HTTP-01 and restarts into HTTPS mode.
+- Renewal is automatic (starts 30 days before expiry).
+
+**Critical requirement for this path:** Let's Encrypt HTTP-01 validation must reach your relay on public inbound **port 80**. This is not optional and not configurable to another external port.
+
+- `relay.example.com:80` must be reachable from the public internet.
+- Port remapping to a different external port (for example exposing `8080` or `30080` externally) will fail HTTP-01 validation.
+- If you cannot expose public inbound port 80, use the Bring Your Own certificate path.
+
+2. **Bring Your Own certificate (pre-provisioned)**
+- Place your existing PEM files in the configured cert directory before startup:
+  - `cert.pem` (full chain)
+  - `privkey.pem` (matching private key)
+- Relay will boot directly into secure mode without running setup.
+
+Current automated ACME integration is Let's Encrypt only. If you use another CA, pre-provision `cert.pem` and `privkey.pem`.
+
+### Why production must use a signed certificate
+
+In production, this should be a publicly trusted, CA-signed certificate:
+
+- Users open relay approval links from chat apps and mobile browsers; untrusted/self-signed certs cause blocking warnings and broken trust UX.
+- Relay serves active JavaScript (`relay-auth.js`) that performs browser-side crypto; certificate warnings on this endpoint undermine integrity guarantees for users.
+- Setup mode and renewal rely on ACME HTTP-01 reachability on port `80` and secure service on `443`.
+
+Self-signed certs are acceptable only for isolated development/testing.
+
+### Bring Your Own Certificate Example
+
+```bash
+mkdir -p /opt/vork-relay/certs
+cp /path/to/fullchain.pem /opt/vork-relay/certs/cert.pem
+cp /path/to/privkey.pem /opt/vork-relay/certs/privkey.pem
+chmod 600 /opt/vork-relay/certs/privkey.pem
+chmod 644 /opt/vork-relay/certs/cert.pem
+```
+
 ### Production Checklist
 
 - [ ] Run behind a TLS-terminating reverse proxy (nginx, Caddy, Cloudflare Tunnel).
+- [ ] If using built-in Let's Encrypt automation: public inbound port `80` for your relay hostname is open and routable to this instance.
 - [ ] Set `vork.relay.upload-token` to a strong random value.
 - [ ] Set `vork.relay.ttl-minutes` appropriate for your workflow (default: 15).
 - [ ] Set `vork.relay.max-entries` to cap memory usage (default: 1000).
@@ -363,14 +422,52 @@ mvn spring-boot:run
 - [ ] Confirm `server.port` is not directly exposed; only the proxy should be public.
 - [ ] Review CSP header if you need to serve from a CDN (currently `'self'` only).
 
-### Docker
+### Docker (Self-Hosting)
 
-```dockerfile
-FROM eclipse-temurin:21-jre-alpine
-COPY target/vork-relay-*.jar /app/vork-relay.jar
-EXPOSE 8090
-ENTRYPOINT ["java", "-jar", "/app/vork-relay.jar"]
+Prebuilt image on Docker Hub:
+
+```bash
+docker pull justvork/vork-relay:latest
+
+docker run --rm -p 8090:8090 \
+  -e VORK_RELAY_UPLOAD_TOKEN="$(openssl rand -base64 32)" \
+  -e VORK_RELAY_TTL_MINUTES=15 \
+  -e VORK_RELAY_MAX_ENTRIES=1000 \
+  justvork/vork-relay:latest
 ```
+
+Production (automatic Let's Encrypt or pre-provisioned certs):
+
+```bash
+docker run -d --name vork-relay \
+  -p 80:80 -p 443:443 \
+  -v /opt/vork-relay/certs:/etc/vork/relay/certs \
+  -e VORK_RELAY_UPLOAD_TOKEN="$(openssl rand -base64 32)" \
+  -e VORK_RELAY_TTL_MINUTES=15 \
+  -e VORK_RELAY_MAX_ENTRIES=1000 \
+  --restart unless-stopped \
+  justvork/vork-relay:latest
+```
+
+Notes:
+- Use an empty mounted cert directory on first boot to enter setup mode (`/setup`) and issue a Let's Encrypt cert.
+- Or pre-populate the mounted directory with `cert.pem` + `privkey.pem` to start directly on HTTPS.
+- Ensure DNS points your hostname to this host and inbound port `80` is reachable for ACME HTTP-01 validation.
+- For Let's Encrypt HTTP-01, the external validation path must be on port `80` exactly. If that is not possible in your environment, pre-provision `cert.pem` and `privkey.pem` instead.
+
+Build locally from this repository:
+
+```bash
+docker build -t justvork/vork-relay:local .
+
+docker run --rm -p 8090:8090 \
+  -e VORK_RELAY_UPLOAD_TOKEN="your-token" \
+  justvork/vork-relay:local
+```
+
+The image runs the standalone relay server module (`vork-relay-server`) and listens on port `8090` by default.
+
+If token protection is enabled on the relay, configure Vork server with the same token value via `vork.relay.upload-token` (for example environment variable `VORK_RELAY_UPLOAD_TOKEN`) so upload requests include a matching `X-Relay-Token` header.
 
 ---
 
